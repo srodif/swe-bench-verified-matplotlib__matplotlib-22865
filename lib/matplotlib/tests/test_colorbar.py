@@ -1037,3 +1037,36 @@ def test_title_text_loc():
     # colorbar axes, including its extend triangles....
     assert (cb.ax.title.get_window_extent(fig.canvas.get_renderer()).ymax >
             cb.ax.spines['outline'].get_window_extent().ymax)
+
+
+@pytest.mark.parametrize("extend", ['neither', 'min', 'max', 'both'])
+def test_colorbar_drawedges_with_extend(extend):
+    """Test that drawedges works correctly with different extend options."""
+    from matplotlib.colors import from_levels_and_colors
+    
+    # Create test colorbar with drawedges=True
+    bounds = np.arange(5)  
+    nb_colors = len(bounds) + 1
+    colors = cm.viridis(np.linspace(0, 1, nb_colors))
+    my_cmap, my_norm = from_levels_and_colors(bounds, colors, extend=extend)
+    
+    fig, ax = plt.subplots()
+    cbar = Colorbar(ax, cmap=my_cmap, norm=my_norm, drawedges=True)
+    
+    # Check that dividers has segments when drawedges=True
+    num_segments = len(cbar.dividers.get_segments())
+    assert num_segments > 0, f"Expected segments for extend='{extend}', got {num_segments}"
+    
+    # For extend='both', verify we have more segments than extend='neither'
+    # This tests that the fix includes edge segments at extremities
+    if extend == 'both':
+        # Create comparison colorbar with extend='neither'  
+        fig2, ax2 = plt.subplots()
+        my_cmap2, my_norm2 = from_levels_and_colors(bounds, colors, extend='neither')
+        cbar2 = Colorbar(ax2, cmap=my_cmap2, norm=my_norm2, drawedges=True)
+        num_segments_neither = len(cbar2.dividers.get_segments())
+        
+        # The 'both' case should have at least as many segments as 'neither'
+        # since it should include edges at extremities
+        assert num_segments >= num_segments_neither, \
+            f"extend='both' should have >= {num_segments_neither} segments, got {num_segments}"

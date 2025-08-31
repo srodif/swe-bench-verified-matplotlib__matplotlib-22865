@@ -651,8 +651,24 @@ class Colorbar:
             if not self.drawedges:
                 if len(self._y) >= self.n_rasterize:
                     self.solids.set_rasterized(True)
-        self.dividers.set_segments(
-            np.dstack([X, Y])[1:-1] if self.drawedges else [])
+        # Determine which segments to draw as edges
+        if self.drawedges:
+            segments = np.dstack([X, Y])
+            if self._extend_lower() and self._extend_upper():
+                # Include all segments including edges between main colorbar and extensions
+                edge_segments = segments[:]
+            elif self._extend_lower():
+                # Include edge at lower boundary but not upper boundary  
+                edge_segments = segments[:-1]
+            elif self._extend_upper():
+                # Include edge at upper boundary but not lower boundary
+                edge_segments = segments[1:]
+            else:  # extend == 'neither'
+                # Original behavior: no extensions, exclude outer boundaries
+                edge_segments = segments[1:-1]
+            self.dividers.set_segments(edge_segments)
+        else:
+            self.dividers.set_segments([])
 
     def _add_solids_patches(self, X, Y, C, mappable):
         hatches = mappable.hatches * len(C)  # Have enough hatches.
