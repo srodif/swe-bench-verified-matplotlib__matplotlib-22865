@@ -655,16 +655,16 @@ class Colorbar:
         if self.drawedges:
             segments = np.dstack([X, Y])
             if self._extend_lower() and self._extend_upper():
-                # Include all segments to draw edges at both extremities
+                # Include all segments including edges between main colorbar and extensions
                 edge_segments = segments[:]
             elif self._extend_lower():
-                # Include first segment to draw edge at lower extremity
+                # Include edge at lower boundary but not upper boundary  
                 edge_segments = segments[:-1]
             elif self._extend_upper():
-                # Include last segment to draw edge at upper extremity  
+                # Include edge at upper boundary but not lower boundary
                 edge_segments = segments[1:]
             else:  # extend == 'neither'
-                # Original behavior: exclude both extremities
+                # Original behavior: no extensions, exclude outer boundaries
                 edge_segments = segments[1:-1]
             self.dividers.set_segments(edge_segments)
         else:
